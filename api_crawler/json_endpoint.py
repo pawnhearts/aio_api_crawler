@@ -87,15 +87,8 @@ class JsonEndpoint:
         str, Union[int, str, Iterable, AsyncGenerator, Awaitable, Callable]
     ] = {}
     proxy: Optional[Union[str, Callable, Awaitable, Iterable, AsyncGenerator]] = None
-    limit: int = 300
-    limit_per_host: int = 0
 
     def __init__(self, session=None, **kwargs):
-        if not session:
-            connector = TCPConnector(
-                limit=self.limit, limit_per_host=self.limit_per_host
-            )
-            session = aiohttp.ClientSession(connector=connector)
         self.session = session or aiohttp.ClientSession()
         for key, value in kwargs.items():
             if not hasattr(self, key):

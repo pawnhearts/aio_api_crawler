@@ -1,13 +1,14 @@
 from example import Posts, Comments, Categories
 
-from api_crawler.worker import Worker, SqliteSink, LoggingSink
+from api_crawler.worker import Worker
+from api_crawler.sink import LoggingSink
 
 
 class MyWorker(Worker):
     endpoint = Posts()
-    sink = LoggingSink()
+    sinks = [LoggingSink()]
 
-    async def process(self, obj):
+    def process(self, obj):
         return {'id': obj['id', 'text': obj['text'].upper()]}
 
 

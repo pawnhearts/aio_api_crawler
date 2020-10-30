@@ -221,7 +221,6 @@ class JsonEndpoint:
                 async for params in iparams:
                     if isinstance(params, dict):
                         results = await self.get_results(url, params)
-                        print(url, params, results)
                         if iterable(results):
                             for res in results:
                                 yield ResultWrapper(res, url, params) if wrap_results else res

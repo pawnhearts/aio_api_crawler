@@ -6,9 +6,6 @@ class MotorSink(Sink):
     db_name: str
     collection_name: str
 
-    def transform(self, obj):
-        return repr(obj)
-
     async def init(self):
         import motor.motor_asyncio
         self.client = motor.motor_asyncio.AsyncIOMotorClient(self.db_url)

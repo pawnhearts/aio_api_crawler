@@ -121,7 +121,8 @@ class Endpoint:
             raise AttributeError(f'params_type should be in {repr(param_types)}')
 
     async def set_session(self, session):
-        await self.session.close()
+        if self.session:
+            await self.session.close()
         self.session = session
 
     async def perform_request(self, url, **kwargs):
@@ -148,6 +149,8 @@ class Endpoint:
     async def iter_params(self, params=None):
         if params is None:
             params = self.params
+        if not params:
+            yield params
         for key, value in params.items():
             if iterable(value) and not isinstance(value, range):
                 for i in value:
@@ -157,8 +160,7 @@ class Endpoint:
                 async for i in value:
                     yield self.iter_params(copydict(params, key, i))
                 return
-        else:
-            yield params
+
         ranges = [
             (key, value) for key, value in params.items() if isinstance(value, range)
         ]
@@ -226,7 +228,7 @@ class Endpoint:
                 async for params in iparams:
                     if isinstance(params, dict):
                         results = await self.get_results(url, params)
-                        if iterable(results):
+                        if isinstance(results, list):
                             for res in results:
                                 yield ResultWrapper(
                                     res, url, params

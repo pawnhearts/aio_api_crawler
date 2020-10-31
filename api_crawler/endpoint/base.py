@@ -1,3 +1,4 @@
+import enum
 from json import JSONDecodeError
 from typing import (
     Optional,
@@ -69,12 +70,18 @@ def UrlWrapper(s, params):
     return obj
 
 
+class ParamTypes(enum.Enum):
+    params = 'params'
+    data = 'data'
+    json = 'json'
+
+
 class Endpoint:
     url: str = ""
     params: Dict[
         str, Union[int, str, Iterable, AsyncGenerator, Awaitable, Callable]
     ] = {}
-    params_type = "params"
+    params_type: ParamTypes = ParamTypes.params.value
     url_params: Dict[
         str, Union[int, str, Iterable, AsyncGenerator, Awaitable, Callable]
     ] = {}
@@ -98,8 +105,9 @@ class Endpoint:
                 getattr(self, key).update(value)
             else:
                 setattr(self, key, value)
-        if self.params_type not in ["params", "data", "json"]:
-            raise AttributeError(f'params_type should be "params", "data" or "json"')
+        param_types = [ptype.value for ptype in ParamTypes]
+        if self.params_type not in param_types:
+            raise AttributeError(f'params_type should be in {repr(param_types)}')
 
     async def perform_request(self, url, **kwargs):
         async with self.session.request(self.method, url, **kwargs) as res:

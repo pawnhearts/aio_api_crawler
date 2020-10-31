@@ -1,1 +1,1 @@
-from .json_endpoint import JsonEndpoint
+from api_crawler.endpoint.json_endpoint import JsonEndpoint

@@ -1,4 +1,4 @@
-from example import Posts, Comments, Categories
+from example import Posts
 
 from api_crawler.worker import Worker
 from api_crawler.sink import LoggingSink

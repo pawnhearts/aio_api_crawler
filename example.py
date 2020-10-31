@@ -2,7 +2,7 @@ import asyncio
 import random
 from aiohttp import ClientSession
 
-from api_crawler import JsonEndpoint
+from api_crawler.endpoint import JsonEndpoint
 
 
 def get_user_agent():
@@ -30,9 +30,11 @@ class Posts(JsonEndpoint):
             self.session,
             url_params={"category": post.url.params["category"], "id": post["id"]},
         )
-        return [comment async for comment in comments]
+        return await comments.results()
+
 
 posts = Posts()
+
 
 class Comments(JsonEndpoint):
     url = "http://127.0.0.1:8888/categories/{category}/posts/{id}/comments"

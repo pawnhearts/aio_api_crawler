@@ -1,9 +1,8 @@
 import asyncio
 from contextlib import AsyncExitStack
-from typing import List, Type, Optional, Dict
+from typing import List, Dict
 
-import aiohttp
-from aiohttp import TCPConnector, ClientSession
+from aiohttp import ClientSession
 
 from api_crawler import JsonEndpoint
 from api_crawler.sink import Sink

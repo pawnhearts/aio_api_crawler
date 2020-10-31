@@ -57,16 +57,19 @@ class ResultWrapper:
 
 
 def ResultWrapper(data, url, params):
-    return type('ResultWrapper', (data.__class__, ), {'params': params, 'url': url})(data)
+    return type("ResultWrapper", (data.__class__,), {"params": params, "url": url})(data)
+
 
 def UrlWrapper(s, params):
     class UrlWrapper(str):
         params = None
+
     obj = UrlWrapper(s)
     obj.params = params
     return obj
 
-class JsonEndpoint:
+
+class Endpoint:
     url: str = ""
     params: Dict[
         str, Union[int, str, Iterable, AsyncGenerator, Awaitable, Callable]
@@ -75,9 +78,6 @@ class JsonEndpoint:
     url_params: Dict[
         str, Union[int, str, Iterable, AsyncGenerator, Awaitable, Callable]
     ] = {}
-    results_key: Optional[
-        str
-    ] = None  # can be compound 'page.results' would grab data['page']['results']
     method = "get"
     good_statuses: List[int] = [200]
     headers: Dict[
@@ -101,14 +101,15 @@ class JsonEndpoint:
         if self.params_type not in ["params", "data", "json"]:
             raise AttributeError(f'params_type should be "params", "data" or "json"')
 
-    async def request(self, url, **kwargs):
+    async def perform_request(self, url, **kwargs):
         async with self.session.request(self.method, url, **kwargs) as res:
             if res.status in self.good_statuses:
-                try:
-                    return await res.json(content_type=None)
-                except (JSONDecodeError, ContentTypeError) as e:
-                    log.exception(e)
-                    return
+                return await self.fetch(res)
+            else:
+                log.exception(f'Request status for {url}: {res.status}')
+
+    async def fetch(self, response):
+        return await response.text()
 
     async def _call_callables(self, params):
         if any(callable(value) for value in params.values()):
@@ -172,18 +173,8 @@ class JsonEndpoint:
         else:
             return self.proxy
 
-    def _get_results_by_keys(self, res, keys):
-        if not keys:
-            return res
-        if not isinstance(res, (list, dict)):
-            raise ValueError(f"Keys are {keys} but result is not a list or dict")
-        key = keys.pop(0)
-        if key == "*":
-            if not isinstance(res, list):
-                raise ValueError("Key is * but result is not a list")
-            return [self._get_results_by_keys(elem, list(keys)) for elem in res]
-        else:
-            return self._get_results_by_keys(res[key], list(keys))
+    def transform(self, results):
+        return results
 
     async def get_results(self, url, params):
         args = {
@@ -192,14 +183,8 @@ class JsonEndpoint:
             "cookies": await self._call_callables(self.cookies),
             "proxy": await self.get_proxy(),
         }
-        res = await self.request(url, **args)
-        if res and self.results_key:
-            try:
-                return self._get_results_by_keys(res, self.results_key.split("."))
-            except (IndexError, KeyError, ValueError) as e:
-                log.exception(e)
-                return
-        return res
+        res = await self.perform_request(url, **args)
+        return self.transform(res)
 
     async def _iter_url(self, url):
         yield url
@@ -216,9 +201,13 @@ class JsonEndpoint:
                         results = await self.get_results(url, params)
                         if iterable(results):
                             for res in results:
-                                yield ResultWrapper(res, url, params) if wrap_results else res
+                                yield ResultWrapper(
+                                    res, url, params
+                                ) if wrap_results else res
                         elif results:
-                            yield ResultWrapper(results, url, params) if wrap_results else results
+                            yield ResultWrapper(
+                                results, url, params
+                            ) if wrap_results else results
                         else:
                             return
                     else:

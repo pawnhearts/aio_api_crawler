@@ -12,6 +12,7 @@ from typing import (
 )
 import aiohttp
 from aiohttp import TCPConnector, ContentTypeError
+from bs4 import Tag
 from loguru import logger as log
 
 
@@ -58,6 +59,10 @@ class ResultWrapper:
 
 
 def ResultWrapper(data, url, params):
+    if isinstance(data, Tag):
+        data.url = url
+        data.params = params
+        return data
     return type("ResultWrapper", (data.__class__,), {"params": params, "url": url})(data)
 
 
@@ -94,6 +99,7 @@ class Endpoint:
         str, Union[int, str, Iterable, AsyncGenerator, Awaitable, Callable]
     ] = {}
     proxy: Optional[Union[str, Callable, Awaitable, Iterable, AsyncGenerator]] = None
+    wrap_results: bool = True
 
     def __init__(self, session=None, **kwargs):
         self.session = session or aiohttp.ClientSession()
@@ -108,6 +114,10 @@ class Endpoint:
         param_types = [ptype.value for ptype in ParamTypes]
         if self.params_type not in param_types:
             raise AttributeError(f'params_type should be in {repr(param_types)}')
+
+    def set_session(self, session):
+        self.session.close()
+        self.session = session
 
     async def perform_request(self, url, **kwargs):
         async with self.session.request(self.method, url, **kwargs) as res:
@@ -142,6 +152,8 @@ class Endpoint:
                 async for i in value:
                     yield self.iter_params(copydict(params, key, i))
                 return
+        else:
+            yield params
         ranges = [
             (key, value) for key, value in params.items() if isinstance(value, range)
         ]
@@ -197,7 +209,7 @@ class Endpoint:
     async def _iter_url(self, url):
         yield url
 
-    async def iter_results(self, iurls=None, iparams=None, wrap_results=True):
+    async def iter_results(self, iurls=None, iparams=None):
         if iurls is None:
             iurls = self.iter_urls()
         if iparams is None:
@@ -211,11 +223,11 @@ class Endpoint:
                             for res in results:
                                 yield ResultWrapper(
                                     res, url, params
-                                ) if wrap_results else res
+                                ) if self.wrap_results else res
                         elif results:
                             yield ResultWrapper(
                                 results, url, params
-                            ) if wrap_results else results
+                            ) if self.wrap_results else results
                         else:
                             return
                     else:

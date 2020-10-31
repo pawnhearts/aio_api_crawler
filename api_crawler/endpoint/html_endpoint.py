@@ -1,7 +1,7 @@
 import enum
 
 from .base import Endpoint
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 
 class SelectTypes(enum.Enum):
@@ -28,6 +28,6 @@ class HtmlEndpoint(Endpoint):
             if self.select_type == SelectTypes.soup.value:
                 return tags
             elif self.select_type == SelectTypes.text.value:
-                return tags.text if self.select_one else [tag.text for tag in tags]
+                return tags.text if self.select_one else [isinstance(tag, Tag) and tag.text for tag in tags]
             elif self.select_type == SelectTypes.attrs.value:
-                return tags.attrs if self.select_one else [tag.attrs for tag in tags]
+                return tags.attrs if self.select_one else [isinstance(tag, Tag) and tag.attrs for tag in tags]

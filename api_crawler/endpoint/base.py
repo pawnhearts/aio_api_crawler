@@ -1,5 +1,6 @@
 import enum
 from json import JSONDecodeError
+import random
 from typing import (
     Optional,
     Iterable,
@@ -17,7 +18,7 @@ from loguru import logger as log
 
 
 def iterable(arg):
-    return isinstance(arg, Iterable) and not isinstance(arg, str)
+    return isinstance(arg, Iterable) and not isinstance(arg, (str, list, dict))
 
 
 def async_iterable(arg):
@@ -82,6 +83,10 @@ class ParamTypes(enum.Enum):
 
 
 class Endpoint:
+    """
+    If some values in params or urlparams are itrable or async iterable it would iterate over them and get results
+    for each value. lists and dicts are passed as it is. If you want it to iterate over list use iter([1, 2])
+    """
     url: str = ""
     params: Dict[
         str, Union[int, str, Iterable, AsyncGenerator, Awaitable, Callable]
@@ -180,7 +185,9 @@ class Endpoint:
                 yield self.iter_urls(params)
 
     async def get_proxy(self):
-        if iterable(self.proxy):
+        if isinstance(self.proxy, list):
+            return random.choice(self.proxy)
+        elif iterable(self.proxy):
             return next(self.proxy)
         elif async_iterable(self.proxy):
             return self.proxy.__anext__()

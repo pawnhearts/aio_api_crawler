@@ -3,7 +3,7 @@ from .base import Sink
 
 class LoggingSink(Sink):
     def transform(self, obj):
-        return repr(obj)
+        return obj
 
     async def init(self):
         from loguru import logger

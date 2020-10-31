@@ -27,7 +27,7 @@ class Worker:
         async with AsyncExitStack() as stack:
             sinks = [await stack.enter_async_context(sink) for sink in self.sinks]
             async with ClientSession() as session:
-                self.endpoint.set_session(session)
+                await self.endpoint.set_session(session)
                 async for obj in self.endpoint.iter_results():
                     new_obj = self.transform(obj)
                     if new_obj:

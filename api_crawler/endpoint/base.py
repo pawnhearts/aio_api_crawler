@@ -115,8 +115,8 @@ class Endpoint:
         if self.params_type not in param_types:
             raise AttributeError(f'params_type should be in {repr(param_types)}')
 
-    def set_session(self, session):
-        self.session.close()
+    async def set_session(self, session):
+        await self.session.close()
         self.session = session
 
     async def perform_request(self, url, **kwargs):

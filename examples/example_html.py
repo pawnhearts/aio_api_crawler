@@ -1,5 +1,8 @@
 import asyncio
 
+import sys
+sys.path.append('..')
+
 from api_crawler.endpoint import HtmlEndpoint
 from api_crawler.sink import LoggingSink
 from api_crawler.worker import Worker

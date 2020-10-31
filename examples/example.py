@@ -2,6 +2,9 @@ import asyncio
 import random
 from aiohttp import ClientSession
 
+import sys
+sys.path.append('..')
+
 from api_crawler.endpoint import JsonEndpoint
 
 

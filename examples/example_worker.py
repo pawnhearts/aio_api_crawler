@@ -1,5 +1,8 @@
 from example import Posts
 
+import sys
+sys.path.append('..')
+
 from api_crawler.worker import Worker
 from api_crawler.sink import LoggingSink
 

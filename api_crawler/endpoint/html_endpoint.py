@@ -12,6 +12,7 @@ class SelectTypes(enum.Enum):
     text = 'text'
     attrs = 'attrs'
     attr = 'attr'
+    fun = 'fun'
 
 
 def selector_defaults(cls):
@@ -54,12 +55,14 @@ class HtmlEndpoint(Endpoint):
                 return {name: self.select_by_class(tags, sub) for name, sub in subs.items()}
 
         if obj.type == SelectTypes.text.value:
-            return tags.text if not obj.many else [isinstance(tag, Tag) and tag.text for tag in tags]
+            return getattr(tags, 'text', '') if not obj.many else [isinstance(tag, Tag) and getattr(tags, 'text', '') for tag in tags]
         elif obj.type == SelectTypes.attrs.value:
             return tags.attrs if not obj.many else [isinstance(tag, Tag) and tag.attrs for tag in tags]
         elif obj.type == SelectTypes.attr.value:
             return tags.attrs.get(obj.attr) if not obj.many else [isinstance(tag, Tag) and tag.attrs.get(obj.attr) for
                                                                   tag in tags]
+        elif obj.type == SelectTypes.fun.value:
+            return obj.fun(tags) if not obj.many else [isinstance(tag, Tag) and obj.fun(tags) for tag in tags]
 
     async def fetch(self, response):
         res = await response.text()
